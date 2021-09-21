@@ -46,6 +46,11 @@ class TodoListViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
+        // Delete in CRUD
+//        context.delete(itemArray[indexPath.row])
+//        itemArray.remove(at: indexPath.row)
+        
+        //Update in CRUD
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         
         saveItems()
@@ -88,7 +93,7 @@ class TodoListViewController: UITableViewController {
     //MARK: - Model Manipulation Methods
     
     func saveItems() {
-        // CREATE IN CRUD
+        // Called to Create, Update and Delete (CRUD)
         do {
             try context.save()
         } catch {
@@ -99,7 +104,7 @@ class TodoListViewController: UITableViewController {
     }
     
     func loadItems() {
-        // READ IN CRUD
+        //Called to Read (CRUD)
         let request: NSFetchRequest<Item> = Item.fetchRequest()
         do {
             itemArray = try context.fetch(request)
