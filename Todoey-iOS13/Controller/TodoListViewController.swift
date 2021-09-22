@@ -12,6 +12,12 @@ class TodoListViewController: UITableViewController {
     
     var itemArray = [Item]()
     
+    var selectedCategory : Category? {
+        didSet{
+            loadItems()
+        }
+    }
+    
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     
@@ -19,8 +25,6 @@ class TodoListViewController: UITableViewController {
         super.viewDidLoad()
         
         print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
-        
-        loadItems()
     }
     
     //MARK: - TableView Datasource Methods
@@ -31,7 +35,6 @@ class TodoListViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
-        cell.textLabel?.text = itemArray[indexPath.row].title
         
         let item = itemArray[indexPath.row]
         
@@ -43,7 +46,7 @@ class TodoListViewController: UITableViewController {
         
     }
     
-    //MARK: - TableView Datasource Methods
+    //MARK: - TableView Delegate Methods
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
@@ -73,7 +76,7 @@ class TodoListViewController: UITableViewController {
             let newItem = Item(context: self.context)
             newItem.title = textField.text!
             newItem.done = false
-            
+            newItem.parentCategory = self.selectedCategory
             self.itemArray.append(newItem)
             
             self.saveItems()
@@ -82,7 +85,6 @@ class TodoListViewController: UITableViewController {
         alert.addTextField { alertTextField in
             alertTextField.placeholder = "Create new item"
             textField = alertTextField
-            print("Now")
         }
         
         alert.addAction(action)
@@ -93,8 +95,9 @@ class TodoListViewController: UITableViewController {
     
     //MARK: - Model Manipulation Methods
     
+    // Called to Create, Update and Delete (CRUD)
+
     func saveItems() {
-        // Called to Create, Update and Delete (CRUD)
         do {
             try context.save()
         } catch {
@@ -103,9 +106,18 @@ class TodoListViewController: UITableViewController {
         
         self.tableView.reloadData()
     }
-    
-    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest()) {
-        //Called to Read (CRUD)
+
+    //Called to Read (CRUD)
+    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(), predicate: NSPredicate? = nil) {
+        
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+        
+        if let additionalPredicate = predicate {
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
+        } else {
+            request.predicate = categoryPredicate
+        }
+        
         do {
             itemArray = try context.fetch(request)
         } catch {
@@ -124,11 +136,12 @@ extension TodoListViewController: UISearchBarDelegate {
         
         let request: NSFetchRequest<Item> = Item.fetchRequest()
                 
-        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
                 
         request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
-                
-        loadItems(with: request)
+                        
+        loadItems(with: request, predicate: predicate)
+        
 
     }
     
