@@ -6,4 +6,6 @@ target 'Todoey-iOS13' do
 
   # Pods for Todoey-iOS13
     pod 'SwipeCellKit'
+    pod 'ChameleonFramework/Swift', :git => 'https://github.com/wowansm/Chameleon.git', :branch => 'swift5'
+
 end

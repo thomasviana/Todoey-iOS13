@@ -7,13 +7,14 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
 class TodoListViewController: SwipeTableViewController {
     
     var todoItems: Results<Item>?
     let realm = try! Realm()
     
-    var selectedCategory : Category? {
+    var selectedCategory: Category? {
         didSet{
             loadItems()
         }
@@ -21,7 +22,9 @@ class TodoListViewController: SwipeTableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
+        title = selectedCategory!.name
+        tableView.separatorStyle = .none
+
     }
     
     //MARK: - TableView Datasource Methods
@@ -33,8 +36,15 @@ class TodoListViewController: SwipeTableViewController {
         
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
-        cell.textLabel?.text = todoItems?[indexPath.row].title ?? "No items added yet"
-        cell.accessoryType = (todoItems?[indexPath.row].done)! ? .checkmark : .none
+        if let item = todoItems?[indexPath.row] {
+            cell.textLabel?.text = item.title
+            cell.accessoryType = item.done ? .checkmark : .none
+            
+            if let colour = UIColor(hexString: selectedCategory!.color)?.darken(byPercentage:CGFloat(indexPath.row) / CGFloat(todoItems!.count)) {
+                cell.backgroundColor = colour
+                cell.textLabel?.textColor = ContrastColorOf(colour, returnFlat: true)
+            }
+        }
         
         return cell
         
